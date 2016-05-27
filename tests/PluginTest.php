@@ -8,12 +8,12 @@
  * @package Phergie\Irc\Plugin\React\One Night Revolution Bot
  */
 
-namespace Phergie\Irc\Tests\Plugin\React\One Night Revolution Bot;
+namespace Phergie\Irc\Tests\Plugin\React\OneNightRevolutionBot;
 
 use Phake;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
 use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
-use Phergie\Irc\Plugin\React\One Night Revolution Bot\Plugin;
+use Phergie\Irc\Plugin\React\OneNightRevolutionBot\Plugin;
 
 /**
  * Tests for the Plugin class.
