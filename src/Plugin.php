@@ -64,7 +64,7 @@ class Plugin extends AbstractPlugin
 		$gameName = strtolower($event->getCustomParams()[0]);
 		
 		if ($gameName === 'onenightrevolution' || $gameName === 'onr' || $gameName === 'one night revolution') {			
-			$this->activeGames[$serverName][$channel] = 'onr';
+			$this->activeGames[$serverName][$channel] = new OneNightRevolution();
 			$queue->ircPrivmsg($channel, 'One Night Revolution created in '.$channel);
 		}
     }
