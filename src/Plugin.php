@@ -8,7 +8,7 @@
  * @package Phergie\Irc\Plugin\React\One Night Revolution Bot
  */
 
-namespace Phergie\Irc\Plugin\React\One Night Revolution Bot;
+namespace Phergie\Irc\Plugin\React\OneNightRevolutionBot;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
@@ -22,6 +22,8 @@ use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
  */
 class Plugin extends AbstractPlugin
 {
+	private $activeGames = array();
+	
     /**
      * Accepts plugin configuration.
      *
@@ -44,7 +46,7 @@ class Plugin extends AbstractPlugin
     public function getSubscribedEvents()
     {
         return [
-            'command.' => 'handleCommand',
+            'command.create' => 'handleCreate',
         ];
     }
 
@@ -54,7 +56,16 @@ class Plugin extends AbstractPlugin
      * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
      * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
      */
-    public function handleCommand(Event $event, Queue $queue)
+    public function handleCreate(Event $event, Queue $queue)
     {
+        $channel = $event->getSource();
+		$connection = $event->getConnection();
+		$serverName = $connection->getServerhostname();		
+		$gameName = strtolower($event->getCustomParams()[0]);
+		
+		if ($gameName === 'onenightrevolution' || $gameName === 'onr' || $gameName === 'one night revolution') {			
+			$this->activeGames[$serverName][$channel] = 'onr';
+			$queue->ircPrivmsg($channel, 'One Night Revolution created in '.$channel);
+		}
     }
 }

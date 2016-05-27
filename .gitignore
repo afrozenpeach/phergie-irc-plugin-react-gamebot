@@ -1,2 +1,7 @@
 vendor/*
 composer.lock
+.vs/config/applicationhost.config
+.vsphpignore
+OneNightRevolution.phpproj
+OneNightRevolution.puo
+OneNightRevolution.sln
