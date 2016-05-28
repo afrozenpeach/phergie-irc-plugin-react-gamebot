@@ -164,7 +164,7 @@ class OneNightRevolution
 				$this->queue->ircNotice($playerName, 'You are an informant. Your specialty is: '.$player['specialist']);
 			}
 			else
-				$this->queue->ircNotice($playerName, 'You are a Rebel. Your specialty is: '.$player['specialist'])
+				$this->queue->ircNotice($playerName, 'You are a Rebel. Your specialty is: '.$player['specialist']);
 		}
 		
 		foreach ($informants as $playerName) {
