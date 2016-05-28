@@ -8,7 +8,7 @@
  * @package Phergie\Irc\Plugin\React\One Night Revolution Bot
  */
 
-namespace Phergie\Irc\Plugin\React\OneNightRevolutionBot;
+namespace Phergie\Irc\Plugin\React\GameBot;
 
 use Phergie\Irc\Bot\React\AbstractPlugin;
 use Phergie\Irc\Bot\React\EventQueueInterface as Queue;
@@ -18,7 +18,7 @@ use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
  * Plugin class.
  *
  * @category Phergie
- * @package Phergie\Irc\Plugin\React\One Night Revolution Bot
+ * @package Phergie\Irc\Plugin\React\GameBot
  */
 class Plugin extends AbstractPlugin
 {
@@ -45,8 +45,10 @@ class Plugin extends AbstractPlugin
      */
     public function getSubscribedEvents()
     {
-        return [
+		return [
             'command.create' => 'handleCreate',
+			'command.start' => 'handleStart',
+			'command.join' => 'handleJoin'
         ];
     }
 
@@ -62,10 +64,94 @@ class Plugin extends AbstractPlugin
 		$connection = $event->getConnection();
 		$serverName = $connection->getServerhostname();		
 		$gameName = strtolower($event->getCustomParams()[0]);
-		
-		if ($gameName === 'onenightrevolution' || $gameName === 'onr' || $gameName === 'one night revolution') {			
-			$this->activeGames[$serverName][$channel] = new OneNightRevolution();
-			$queue->ircPrivmsg($channel, 'One Night Revolution created in '.$channel);
+
+		if (isset($this->activeGames[$serverName][$channel])) {
+			$queue->ircPrivmsg($channel, 'Game already running in '.$channel);
+			return;
 		}
+		
+		switch ($gameName) {
+			case 'onenightrevolution':
+			case 'onr':
+			case 'one night revolution':
+				$game = new OneNightRevolution($queue, $this->emitter);
+				break;
+			default:
+				$queue->ircPrivmsg($channel, 'Game not found');
+				return;
+				break;
+		}
+		
+		$this->activeGames[$serverName][$channel] = $game;
+		$queue->ircPrivmsg($channel, $game->getMessage());
     }
+	
+    /**
+     *
+     *
+     * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
+     * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+     */
+	public function handleStart(Event $event, Queue $queue)
+	{
+		$channel = $event->getSource();
+		$connection = $event->getConnection();
+		$serverName = $connection->getServerhostname();	
+		$game = $this->activeGames[$serverName][$channel];
+		
+		if ($game) {
+			$game->start();
+			
+			if ($game->getPhase() !== 'pregame') {
+				$queue->ircPrivmsg($channel, $game->getMessage());
+				$game->runPhase();
+			} else {
+				$queue->ircPrivmsg($channel, $game->getMessage());
+			}
+		} else {
+			$queue->ircPrivmsg($channel, 'No game has been created.');
+		}
+	}
+	
+	/**
+	 *
+	 *
+	 * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
+	 * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+	 */
+	public function handleJoin(Event $event, Queue $queue)
+	{
+		$channel = $event->getSource();
+		$connection = $event->getConnection();
+		$serverName = $connection->getServerhostname();	
+		$game = $this->activeGames[$serverName][$channel];
+		
+		if ($game) {
+			if ($game->getPhase() === 'pregame') {
+				if ($game->addPlayer($event->getNick())) {
+					$queue->ircPrivmsg($channel, $event->getNick().' joined the game!');
+				} else {
+					$queue->ircPrivmsg($channel, $event->getNick().' is already in the game!');
+				}
+			} else {
+				$queue->ircPrivmsg($channel, 'Game already started. Wait until next game.');
+			}
+		} else {
+			$queue->ircPrivmsg($channel, 'No game has been created.');
+		}
+	}
+	
+	public static function shuffle_assoc(&$array) {
+		$keys = array_keys($array);
+
+		shuffle($keys);
+
+		foreach($keys as $key) {
+			$new[$key] = $array[$key];
+		}
+
+		$array = $new;
+
+		return true;
+	}
 }

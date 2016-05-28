@@ -1,6 +1,6 @@
 {
-    "name": "frozen-solid/phergie-irc-plugin-react-onenightrevolution",
-    "description": "Phergie plugin for Play One Night Revolution on IRC",
+    "name": "frozen-solid/phergie-irc-plugin-react-gamebot",
+    "description": "Phergie plugin for playing card and board games on IRC",
     "keywords": [ "phergie", "irc", "bot", "plugin" ],
     "license": "BSD-2-Clause",
     "authors": [
@@ -14,8 +14,8 @@
     "support": {
         "email": "frozen@frozen-solid.net",
         "irc": "irc://irc.freenode.net/phergie",
-        "issues": "https://github.com/frozen-solid/phergie-irc-plugin-react-onenightrevolution/issues",
-        "source": "https://github.com/frozen-solid/phergie-irc-plugin-react-onenightrevolution"
+        "issues": "https://github.com/frozen-solid/phergie-irc-plugin-react-gamebot/issues",
+        "source": "https://github.com/frozen-solid/phergie-irc-plugin-react-gamebot"
     },
     "require": {
         "phergie/phergie-irc-bot-react": "~2",
@@ -31,12 +31,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Phergie\\Irc\\Plugin\\React\\OneNightRevolutionBot\\": "src"
+            "Phergie\\Irc\\Plugin\\React\\GameBot\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Phergie\\Irc\\Tests\\Plugin\\React\\OneNightRevolutionBot\\": "tests"
+            "Phergie\\Irc\\Tests\\Plugin\\React\\GameBot\\": "tests"
         }
     },
     "extra": {
