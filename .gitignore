@@ -7,3 +7,6 @@ OneNightRevolution.puo
 OneNightRevolution.sln
 GameBot.phpproj
 GameBot.sln
+GameBot.puo
+.vscode/launch.json
+php.ini

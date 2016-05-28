@@ -17,11 +17,12 @@ use Phergie\Irc\Plugin\React\GameBot\Plugin as GameBot;
 
 class OneNightRevolution
 {
-	private $players = array();
+	private $players = [];
 	private $phase = null;
 	private $maxPlayers = 10;
 	private $currentController = null;
 	private $specialties = ['Reassigner' => 2, 'Investigator' => 2, 'Thief' => 2, 'Signaler' => 2, 'Observer' => 2];
+	private $ids = ['Rebel' => 10, 'Informant' => 3];
 	private $message = null;
 	private $queue = null;
 	private $emitter = null;
@@ -72,24 +73,31 @@ class OneNightRevolution
 				break;
 			case 9:
 				$this->specialties['Reassigner']--;
+				$this->ids['Rebel']--;
 			case 8:
 				$this->specialties['Thief']--;
+				$this->ids['Rebel']--;
 			case 7:
 				$this->specialties['Observer']--;
+				$this->ids['Rebel']--;
 			case 6:
 				$this->specialties['Signaler']--;
+				$this->ids['Rebel']--;
 			case 5:
 				$this->specialties['Investigator']--;
+				$this->ids['Rebel']--;
 			case 4:
 				$this->specialties['Observer']--;
+				$this->ids['Rebel']--;
 			case 3:
 				$this->specialties['Signaler']--;
+				$this->ids['Rebel']--;
 				break;
 			case 2:
 			case 1:
 			case 0:
 				$this->message = 'Not enough players.';
-				//return;
+				return;
 				break;
 		}
 		
@@ -105,9 +113,18 @@ class OneNightRevolution
 			if ($this->specialties[$specialty] === 0) {
 				unset($this->specialties[$specialty]);
 			}
+			
+			GameBot::shuffle_assoc($this->ids);
+			
+			$id = key($this->ids);
+			$this->players['id'] = $id;
+			$this->ids[$id]--;
+			
+			if ($this->ids[$id] === 0) {
+				unset($this->ids[$id]);
+			}
 		}
 		
-		GameBot::shuffle_assoc($this->specialties);
 		foreach ($this->specialties as $key => $value) {
 			for ($i = 0; $i < $value; $i++) {
 				$this->facedownCards[] = $key;
@@ -116,13 +133,15 @@ class OneNightRevolution
 		
 		GameBot::shuffle_assoc($this->facedownCards);		
 		GameBot::shuffle_assoc($this->players);
+		
+		$this->phase = 'informantreveal';
 	}
 	
 	public function addPlayer(string $playerName) {
 		if (isset($this->players[$playerName])) {
 			return false;
 		} else {
-			$this->players[$playerName] = ['role' => '', 'specialist' => ''];
+			$this->players[$playerName] = ['id' => '', 'specialist' => ''];
 			return true;
 		}
 	}
@@ -132,8 +151,20 @@ class OneNightRevolution
 		switch ($this->phase)
 		{
 			case 'informantsreveal':
-				//$this->informantsReveal();
+				$this->informantsReveal();
 				break;
+		}
+	}
+	
+	public function informantsReveal() {
+		$informants = [];
+		foreach ($this->players as $playerName => $player) {
+			if ($player['id'] === 'Informant')
+				$informants[] = $playerName;
+		}
+		
+		foreach ($informants as $playerName) {
+			$this->queue->ircNotice($playerName, 'You are an informant. The other informants are: '.implode(', ', $informants));
 		}
 	}
 	
