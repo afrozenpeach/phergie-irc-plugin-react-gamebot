@@ -159,12 +159,16 @@ class OneNightRevolution
 	public function informantsReveal() {
 		$informants = [];
 		foreach ($this->players as $playerName => $player) {
-			if ($player['id'] === 'Informant')
+			if ($player['id'] === 'Informant') {
 				$informants[] = $playerName;
+				$this->queue->ircNotice($playerName, 'You are an informant. Your specialty is: '.$player['specialist']);
+			}
+			else
+				$this->queue->ircNotice($playerName, 'You are a Rebel. Your specialty is: '.$player['specialist'])
 		}
 		
 		foreach ($informants as $playerName) {
-			$this->queue->ircNotice($playerName, 'You are an informant. The other informants are: '.implode(', ', $informants));
+			$this->queue->ircNotice($playerName, 'The other informants are: '.implode(', ', $informants));
 		}
 	}
 	
