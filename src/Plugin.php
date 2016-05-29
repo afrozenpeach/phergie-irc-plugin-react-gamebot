@@ -23,7 +23,7 @@ use Phergie\Irc\Plugin\React\Command\CommandEvent as Event;
 class Plugin extends AbstractPlugin
 {
 	private $activeGames = array();
-	
+
     /**
      * Accepts plugin configuration.
      *
@@ -48,7 +48,8 @@ class Plugin extends AbstractPlugin
 		return [
             'command.create' => 'handleCreate',
 			'command.start' => 'handleStart',
-			'command.join' => 'handleJoin'
+			'command.join' => 'handleJoin',
+			'command.end' => 'handleEnd'
         ];
     }
 
@@ -62,14 +63,14 @@ class Plugin extends AbstractPlugin
     {
         $channel = $event->getSource();
 		$connection = $event->getConnection();
-		$serverName = $connection->getServerhostname();		
+		$serverName = $connection->getServerhostname();
 		$gameName = strtolower($event->getCustomParams()[0]);
 
 		if (isset($this->activeGames[$serverName][$channel])) {
 			$queue->ircPrivmsg($channel, 'Game already running in '.$channel);
 			return;
 		}
-		
+
 		switch ($gameName) {
 			case 'onenightrevolution':
 			case 'onr':
@@ -81,11 +82,11 @@ class Plugin extends AbstractPlugin
 				return;
 				break;
 		}
-		
+
 		$this->activeGames[$serverName][$channel] = $game;
 		$queue->ircPrivmsg($channel, $game->getMessage());
     }
-	
+
     /**
      *
      *
@@ -96,12 +97,12 @@ class Plugin extends AbstractPlugin
 	{
 		$channel = $event->getSource();
 		$connection = $event->getConnection();
-		$serverName = $connection->getServerhostname();	
+		$serverName = $connection->getServerhostname();
 		$game = $this->activeGames[$serverName][$channel];
-		
+
 		if ($game) {
 			$game->start();
-			
+
 			if ($game->getPhase() !== 'pregame') {
 				$queue->ircPrivmsg($channel, $game->getMessage());
 				$game->runPhase();
@@ -112,7 +113,7 @@ class Plugin extends AbstractPlugin
 			$queue->ircPrivmsg($channel, 'No game has been created.');
 		}
 	}
-	
+
 	/**
 	 *
 	 *
@@ -123,9 +124,9 @@ class Plugin extends AbstractPlugin
 	{
 		$channel = $event->getSource();
 		$connection = $event->getConnection();
-		$serverName = $connection->getServerhostname();	
+		$serverName = $connection->getServerhostname();
 		$game = $this->activeGames[$serverName][$channel];
-		
+
 		if ($game) {
 			if ($game->getPhase() === 'pregame') {
 				if ($game->addPlayer($event->getNick())) {
@@ -140,7 +141,32 @@ class Plugin extends AbstractPlugin
 			$queue->ircPrivmsg($channel, 'No game has been created.');
 		}
 	}
-	
+
+	/**
+	 *
+	 *
+	 * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
+	 * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+	 */
+	public function handleEnd(Event $event, Queue $queue)
+	{
+		$channel = $event->getSource();
+		$connection = $event->getConnection();
+		$serverName = $connection->getServerhostname();
+		$game = $this->activeGames[$serverName][$channel];
+
+		if ($game) {
+			$queue->ircPrivmsg($channel, 'Game has been ended.');
+			unset($this->activeGames[$serverName][$channel]);
+
+			if (count($this->activeGames[$serverName]) === 0) {
+				unset($this->activeGames[$serverName]);
+			}
+		} else {
+			$queue->ircPrivmsg($channel, 'No game has been created.');
+		}
+	}
+
 	public static function shuffle_assoc(&$array) {
 		$keys = array_keys($array);
 

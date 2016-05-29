@@ -26,17 +26,17 @@ class OneNightRevolution
 	private $message = null;
 	private $queue = null;
 	private $emitter = null;
-	
+
 	private $facedownCards = array();
-	
+
 	public function __construct(Queue $queue, Client $emitter)
 	{
 		$this->phase = 'pregame';
 		$this->queue = $queue;
 		$this->emitter = $emitter;
-		
+
 		$callbacks = $this->getSubscribedEvents();
-		
+
 		foreach ($callbacks as $event => $callback) {
 			$pluginCallback = [ $this, $callback ];
 			if (is_callable($pluginCallback)) {
@@ -44,27 +44,28 @@ class OneNightRevolution
 			}
 			$this->emitter->on($event, $callback);
 		}
-		
-		$this->message = 'One Night Revolution Started! Type !join to join in!';
+
+		$this->message = 'One Night Revolution created! Type !join to join in!';
 	}
-	
+
 	public function getSubscribedEvents()
 	{
 		return [
-			 'command.customcommand' => [$this, 'handleCustomCommand']
+			 'command.action' => [$this, 'handleAction'],
+			 'command.declare' => [$this, 'handleDeclare']
 		];
 	}
-	
+
 	public function getPhase()
 	{
 		return $this->phase;
 	}
-	
+
 	public function getMessage()
 	{
 		return $this->message;
 	}
-	
+
 	public function start()
 	{
 		switch(count($this->players))
@@ -100,43 +101,45 @@ class OneNightRevolution
 				return;
 				break;
 		}
-		
+
 		GameBot::shuffle_assoc($this->players);
-		
+
 		foreach ($this->players as $key => $value) {
 			GameBot::shuffle_assoc($this->specialties);
-			
+
 			$specialty = key($this->specialties);
 			$this->players[$key]['specialist'] = $specialty;
 			$this->specialties[$specialty]--;
-			
+
 			if ($this->specialties[$specialty] === 0) {
 				unset($this->specialties[$specialty]);
 			}
-			
+
 			GameBot::shuffle_assoc($this->ids);
-			
+
 			$id = key($this->ids);
-			$this->players['id'] = $id;
+			$this->players[$key]['id'] = $id;
 			$this->ids[$id]--;
-			
+
 			if ($this->ids[$id] === 0) {
 				unset($this->ids[$id]);
 			}
 		}
-		
+
 		foreach ($this->specialties as $key => $value) {
 			for ($i = 0; $i < $value; $i++) {
 				$this->facedownCards[] = $key;
 			}
 		}
-		
-		GameBot::shuffle_assoc($this->facedownCards);		
+
+		GameBot::shuffle_assoc($this->facedownCards);
 		GameBot::shuffle_assoc($this->players);
-		
+
 		$this->phase = 'informantreveal';
+
+		$this->message = 'Game started! Check notices for IDs and Specialties.';
 	}
-	
+
 	public function addPlayer(string $playerName) {
 		if (isset($this->players[$playerName])) {
 			return false;
@@ -145,35 +148,48 @@ class OneNightRevolution
 			return true;
 		}
 	}
-	
+
 	public function runPhase()
 	{
 		switch ($this->phase)
 		{
-			case 'informantsreveal':
+			case 'informantreveal':
 				$this->informantsReveal();
+				break;
+			case 'nightactions':
+				$this->nightActions();
 				break;
 		}
 	}
-	
-	public function informantsReveal() {
+
+	private function informantsReveal() {
 		$informants = [];
 		foreach ($this->players as $playerName => $player) {
-			if ($player['id'] === 'Informant') {
+			if ($this->players[$playerName]['id'] === 'Informant') {
 				$informants[] = $playerName;
-				$this->queue->ircNotice($playerName, 'You are an informant. Your specialty is: '.$player['specialist']);
+				$this->queue->ircNotice($playerName, 'You are an informant. Your specialty is: '.$this->players[$playerName]['specialist']);
+			} else {
+				$this->queue->ircNotice($playerName, 'You are a Rebel. Your specialty is: '.$this->players[$playerName]['specialist']);
 			}
-			else
-				$this->queue->ircNotice($playerName, 'You are a Rebel. Your specialty is: '.$player['specialist']);
 		}
-		
+
 		foreach ($informants as $playerName) {
-			$this->queue->ircNotice($playerName, 'The other informants are: '.implode(', ', $informants));
+			$this->queue->ircNotice($playerName, 'The informants are: '.implode(', ', $informants));
 		}
 	}
-	
-	public function handleCustomCommand(Event $event, Queue $queue)
+
+	private function nightActions()
 	{
-		$queue->ircPrivmsg($event->getSource(), 'hello');
+
+	}
+
+	public function handleAction(Event $event, Queue $queue)
+	{
+		$player = $event->getNick();
+	}
+
+	public function handleDeclare(Event $event, Queue $queue)
+	{
+
 	}
 }

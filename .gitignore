@@ -2,11 +2,8 @@ vendor/*
 composer.lock
 .vs/config/applicationhost.config
 .vsphpignore
-OneNightRevolution.phpproj
-OneNightRevolution.puo
-OneNightRevolution.sln
 GameBot.phpproj
 GameBot.sln
 GameBot.puo
-.vscode/launch.json
+.vscode/*
 php.ini
