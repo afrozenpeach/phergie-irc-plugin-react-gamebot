@@ -75,7 +75,7 @@ class Plugin extends AbstractPlugin
 			case 'onenightrevolution':
 			case 'onr':
 			case 'one night revolution':
-				$game = new OneNightRevolution($queue, $this->emitter);
+				$game = new OneNightRevolution($queue, $channel, $this->emitter);
 				break;
 			default:
 				$queue->ircPrivmsg($channel, 'Game not found');
@@ -103,10 +103,7 @@ class Plugin extends AbstractPlugin
 		if ($game) {
 			$game->start();
 
-			if ($game->getPhase() !== 'pregame') {
-				$queue->ircPrivmsg($channel, $game->getMessage());
-				$game->runPhase();
-			} else {
+			if ($game->getPhase() === 'pregame') {
 				$queue->ircPrivmsg($channel, $game->getMessage());
 			}
 		} else {
