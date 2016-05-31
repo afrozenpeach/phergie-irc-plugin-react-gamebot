@@ -22,6 +22,7 @@ class OneNightRevolution
 	private $maxPlayers = 10;
 	private $validSpecialties = ['Analyst', 'Confirmer', 'DeepAgent', 'Defector', 'Investigator', 'Observer', 'Reassigner', 'Revealer', 'Signaller', 'Rogue', 'Thief'];
 	private $specialties = ['Reassigner' => 2, 'Investigator' => 2, 'Thief' => 2, 'Signaler' => 2, 'Observer' => 2];
+	private $availableSpecialties = null;
 	private $ids = ['Rebel' => 10, 'Informant' => 3];
 	private $message = null;
 	private $queue = null;
@@ -109,6 +110,7 @@ class OneNightRevolution
 		}
 
 		GameBot::shuffle_assoc($this->players);
+		$this->activeSpecialties = [];
 
 		foreach ($this->players as $key => $value) {
 			GameBot::shuffle_assoc($this->specialties);
@@ -116,6 +118,12 @@ class OneNightRevolution
 			$specialty = key($this->specialties);
 			$this->players[$key]['specialist'] = $specialty;
 			$this->specialties[$specialty]--;
+
+			if (isset($this->activeSpecialties[$specialty])) {
+				$this->activeSpecialties[$specialty]++;
+			} else {
+				$this->activeSpecialties[$specialty] = 1;
+			}
 
 			if ($this->specialties[$specialty] === 0) {
 				unset($this->specialties[$specialty]);
@@ -184,17 +192,17 @@ class OneNightRevolution
 		}
 
 		foreach ($informants as $playerName) {
-			if ($this->players[$playerName]['specialist'] !== 'DeepAgent')
-			$this->queue->ircNotice($playerName, 'The informants are: '.implode(', ', $informants));
+			if ($this->players[$playerName]['specialist'] !== 'DeepAgent') {
+				$this->queue->ircNotice($playerName, 'The informants are: '.implode(', ', $informants));
+			}
 		}
 
-		$this->queue->ircPrivmsg($this->channel, 'Night phase has begun. Each player will be given their missions privately. Complete your missions.');
+		$this->queue->ircPrivmsg($this->channel, 'Night phase has begun. Each player will be given their missions privately. Complete your mission when it is assigned.');
 		$this->phase = 'nightActionsPhase';
 		$this->runPhase();
 	}
 
-	public function nightActions()
-	{
+	private function getNextPlayer(string $nextPhase, string $phaseChangeMessage) {
 		$foundPlayer = false;
 
 		foreach ($this->players as $playerName => $player) {
@@ -211,8 +219,18 @@ class OneNightRevolution
 		}
 
 		if (!$foundPlayer) {
-			$this->phase = 'declarePhase';
+			$this->phase = $nextPhase;
+			$this->queue->ircPrivmsg($this->channel, $phaseChangeMessage);
 			$this->runPhase();
+		}
+
+		return $foundPlayer;
+	}
+
+	public function nightActions()
+	{
+		if (!$this->getNextPlayer('declarePhase', 'The night has ended. When it is your turn, declare a specialty.')) {
+			return;
 		}
 
 		switch ($this->players[$this->currentPlayer]['specialist']) {
@@ -304,7 +322,6 @@ class OneNightRevolution
 		}
 
 		if ($this->phase !== 'nightActionsPhase') {
-			$this->queue->ircNotice($playerName, 'Actions can only be taken during the night phase.');
 			return;
 		}
 
@@ -495,12 +512,48 @@ class OneNightRevolution
 	}
 
 	public function declarePhase() {
-		$this->queue->ircPrivmsg($this->channel, 'The night is over. ');
+		if (!$this->getNextPlayer('dayPhase', 'The declare phase has ended and the day phase has started. Discuss the events of the night. When ready to vote private message me with !vote <playername>')) {
+			return;
+		}
+
+		$availableSpecialties = implode(', ', $this->availableSpecialties);
+		$this->queue->ircPrivmsg($channel, $this->currentPlayer.': Declare your specialty with !declare <'.$availableSpecialties.'>');
 	}
 
 	public function handleDeclare(Event $event, Queue $queue)
 	{
+		$playerName = $event->getNick();
+		$player = $this->players[$playerName];
 
+		//Don't accept events unless it is through a public message
+		if ($event->getSource() !== $channel) {
+			return;
+		}
+
+		if ($this->currentPlayer !== $playerName) {
+			return;
+		}
+
+		if ($this->phase !== 'declarePhase') {
+			return;
+		}
+
+		$args = $event->getCustomParams();
+
+		echo 'Active player: '.$playerName.PHP_EOL;
+		var_dump($args);
+
+		$args[0] =  ucfirst(strtolower($args[0]));
+
+		if (isset($this->availableSpecialties[$args[0]])) {
+			$this->players[$playerName]['declare'] = $args[0];
+		} else {
+			$this->queue->ircNotice($playerName, 'That specialty is unavailable for declaration.');
+		}
+
+		if (isset($this->players[$playerName]['declare'])) {
+			$this->runPhase();
+		}
 	}
 
 	public function handleCheatsheet(Event $event, Queue $queue)
