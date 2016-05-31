@@ -78,26 +78,26 @@ class OneNightRevolution
 		{
 			case 10:
 				break;
-			case 9:
-				$this->specialties['Reassigner']--;
-				$this->ids['Rebel']--;
-			case 8:
-				$this->specialties['Thief']--;
-				$this->ids['Rebel']--;
-			case 7:
-				$this->specialties['Observer']--;
-				$this->ids['Rebel']--;
-			case 6:
+			case 3:
 				$this->specialties['Signaler']--;
-				$this->ids['Rebel']--;
-			case 5:
-				$this->specialties['Investigator']--;
 				$this->ids['Rebel']--;
 			case 4:
 				$this->specialties['Observer']--;
 				$this->ids['Rebel']--;
-			case 3:
+			case 5:
+				$this->specialties['Investigator']--;
+				$this->ids['Rebel']--;
+			case 6:
 				$this->specialties['Signaler']--;
+				$this->ids['Rebel']--;
+			case 7:
+				$this->specialties['Observer']--;
+				$this->ids['Rebel']--;
+			case 8:
+				$this->specialties['Thief']--;
+				$this->ids['Rebel']--;
+			case 9:
+				$this->specialties['Reassigner']--;
 				$this->ids['Rebel']--;
 				break;
 			case 2:
@@ -495,7 +495,7 @@ class OneNightRevolution
 	}
 
 	public function declarePhase() {
-		$this->queue->ircPrivmsg($this->channel, 'Declare phase started');
+		$this->queue->ircPrivmsg($this->channel, 'The night is over. ');
 	}
 
 	public function handleDeclare(Event $event, Queue $queue)
