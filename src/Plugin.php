@@ -166,14 +166,15 @@ class Plugin extends AbstractPlugin
 
 	public static function shuffle_assoc(&$array) {
 		$keys = array_keys($array);
+		$shuffled = [];
 
 		shuffle($keys);
 
 		foreach($keys as $key) {
-			$new[$key] = $array[$key];
+			$shuffled[$key] = $array[$key];
 		}
 
-		$array = $new;
+		$array = $shuffled;
 
 		return true;
 	}

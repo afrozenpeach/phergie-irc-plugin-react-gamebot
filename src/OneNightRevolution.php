@@ -72,6 +72,8 @@ class OneNightRevolution
 
 	public function start()
 	{
+		$this->queue->ircPrivmsg($this->channel, 'Game started! Check notices for IDs and Specialties.');
+
 		switch(count($this->players))
 		{
 			case 10:
@@ -139,9 +141,6 @@ class OneNightRevolution
 		GameBot::shuffle_assoc($this->hq);
 		GameBot::shuffle_assoc($this->players);
 
-		$this->message = 'Game started! Check notices for IDs and Specialties.';
-		$this->queue->ircPrivmsg($this->channel, $this->message);
-
 		$this->phase = 'informantReveal';
 		$this->runPhase();
 	}
@@ -163,8 +162,11 @@ class OneNightRevolution
 			case 'informantReveal':
 				$this->informantsReveal();
 				break;
-			case 'nightActions':
+			case 'nightActionsPhase':
 				$this->nightActions();
+				break;
+			case 'declarePhase':
+				$this->declarePhase();
 				break;
 		}
 	}
@@ -186,68 +188,69 @@ class OneNightRevolution
 			$this->queue->ircNotice($playerName, 'The informants are: '.implode(', ', $informants));
 		}
 
-		$this->phase = 'nightActions';
+		$this->queue->ircPrivmsg($this->channel, 'Night phase has begun. Each player will be given their missions privately. Complete your missions.');
+		$this->phase = 'nightActionsPhase';
 		$this->runPhase();
 	}
 
 	public function nightActions()
 	{
-		$done = false;
+		$foundPlayer = false;
 
 		foreach ($this->players as $playerName => $player) {
 			if ($this->currentPlayer === null || !isset($this->players[$playerName]['action'])) {
 				$this->currentPlayer = $playerName;
+				$first = true;
+
+				echo 'Current player is: '.$playerName.PHP_EOL;
+				var_dump($this->players[$playerName]);
+
+				$foundPlayer = true;
 				break;
 			}
-
-			$done = true;
 		}
 
-		if ($done) {
-			$this->phase = 'declarephase';
+		if (!$foundPlayer) {
+			$this->phase = 'declarePhase';
 			$this->runPhase();
 		}
 
-		switch ($this->players[$playerName]['specialist']) {
+		switch ($this->players[$this->currentPlayer]['specialist']) {
 			case 'Analyst':
-				$this->queue->ircNotice($playerName, 'View another player\'s specialist card. Send me a private message with !action <playername>');
+				$this->queue->ircNotice($this->currentPlayer, 'View another player\'s specialist card. Send me a private message with !action <playername>');
 				break;
 			case 'Confirmer':
-				$this->queue->ircNotice($playerName, 'Your current ID: '.$this->players[$playerName]['id']);
-				$this->runPhase();
+				$this->queue->ircNotice($this->currentPlayer, 'Your current ID: '.$this->players[$this->currentPlayer]['id']);
 				break;
 			case 'DeepAgent':
-				$this->queue->ircNotice($playerName, 'No action during the night phase.');
-				$this->runPhase();
+				$this->queue->ircNotice($this->currentPlayer, 'No action during the night phase. Send me a private message with !action');
 				break;
 			case 'Defetor':
 				if ($player['id'] === 'Rebel') {
-					$this->queue->ircNotice($playerName, 'Switch your ID with an HQ Informant ID. Send me a private message with !action <1, 2, or 3>');
+					$this->queue->ircNotice($this->currentPlayer, 'Switch your ID with an HQ Informant ID. Send me a private message with !action <1, 2, or 3>');
 				} else {
-					$this->queue->ircNotice($playerName, 'Your current ID: '.$this->players[$playerName]['id']);
-					$this->runPhase();
+					$this->queue->ircNotice($this->currentPlayer, 'Your current ID: '.$this->players[$this->currentPlayer]['id'].'. Send me a private message with !action');
 				}
 				break;
 			case 'Investigator':
-				$this->queue->ircNotice($playerName, 'Look at another player\'s ID. Send me a private message with !action <playername>');
+				$this->queue->ircNotice($this->currentPlayer, 'Look at another player\'s ID. Send me a private message with !action <playername>');
 				break;
 			case 'Observer':
-				$this->queue->ircNotice($playerName, 'No action during the night phase.');
-				$this->runPhase();
+				$this->queue->ircNotice($this->currentPlayer, 'No action during the night phase. Send me a private message with !action');
 				break;
 			case 'Reassigner':
 				if ($player['id'] === 'Rebel') {
-					$this->queue->ircNotice($playerName, 'Switch two other player\'s IDs. Send me a private message with !action <playername 1> <playername 2>');
+					$this->queue->ircNotice($this->currentPlayer, 'Switch two other player\'s IDs. Send me a private message with !action <playername 1> <playername 2>');
 				} else {
-					$this->queue->ircNotice($playerName, 'Switch a Rebel player\'s ID with an HQ Informant ID. Send me a private message with !action <playername> <1, 2, or 3>');
+					$this->queue->ircNotice($this->currentPlayer, 'Switch a Rebel player\'s ID with an HQ Informant ID. Send me a private message with !action <playername> <1, 2, or 3>');
 				}
 				break;
 			case 'Revealer':
-				$this->queue->ircNotice($playerName, 'Flip another player\'s ID face up. If it\'s an Informant flip it back down. Send me a private message with !action <playername>');
+				$this->queue->ircNotice($this->currentPlayer, 'Flip another player\'s ID face up. If it\'s an Informant flip it back down. Send me a private message with !action <playername>');
 				break;
 			case 'Signaller':
 				if ($player['id'] === 'Rebel') {
-					$this->queue->ircNotice($playerName, 'Tap the player on your immediate left or right. Send me a private message with !action <left or right>');
+					$this->queue->ircNotice($this->currentPlayer, 'Tap the player on your immediate left or right. Send me a private message with !action <left or right>');
 				} else {
 					$leftPlayer = null;
 					$rightPlayer = null;
@@ -263,26 +266,24 @@ class OneNightRevolution
 					}
 
 					if ($this->players[$leftPlayer]['id'] !== 'Informant' && $this->players[$rightPlayer]['id'] !== 'Informant') {
-						$this->queue->ircNotice($playerName, 'There are no informants to your left or right. Action skipped.');
+						$this->queue->ircNotice($this->currentPlayer, 'There are no informants to your left or right. Send me a private message with !action');
 					} else {
-						$this->queue->ircNotice($playerName, 'Tap an informant on your immediate left or right. Send me a private message with !action <left or right>');
+						$this->queue->ircNotice($this->currentPlayer, 'Tap an informant on your immediate left or right. Send me a private message with !action <left or right>');
 					}
 				}
 				break;
 			case 'Rogue':
 				if ($player['id'] === 'Rebel') {
-					$this->queue->ircNotice($playerName, 'Your current ID: '.$this->players[$playerName]['id']);
-					$this->runPhase();
+					$this->queue->ircNotice($plathis->currentPlayeryerName, 'Your current ID: '.$this->players[$this->currentPlayer]['id'].'.  Send me a private message with !action');
 				} else {
-					$this->queue->ircNotice($playerName, 'Switch a Rebel player\'s ID with another informant player\'s ID. Send me a private message with !action <rebel playername> <informant playername>');
+					$this->queue->ircNotice($this->currentPlayer, 'Switch a Rebel player\'s ID with another informant player\'s ID. Send me a private message with !action <rebel playername> <informant playername>');
 				}
 				break;
 			case 'Thief':
 				if ($player['id'] === 'Rebel') {
-					$this->queue->ircNotice($playerName, 'Switch your ID with another player\'s ID. You will be sent a notice with your new ID. Send me a private message with !action <playername>');
+					$this->queue->ircNotice($this->currentPlayer, 'Switch your ID with another player\'s ID. You will be sent a notice with your new ID. Send me a private message with !action <playername>');
 				} else {
-					$this->queue->ircNotice($playerName, 'Your current ID: '.$this->players[$playerName]['id']);
-					$this->runPhase();
+					$this->queue->ircNotice($this->currentPlayer, 'Your current ID: '.$this->players[$this->currentPlayer]['id'].'. Send me a private message with !action');
 				}
 				break;
 		}
@@ -291,6 +292,7 @@ class OneNightRevolution
 	public function handleAction(Event $event, Queue $queue)
 	{
 		$playerName = $event->getNick();
+		$player = $this->players[$playerName];
 
 		//Don't accept events unless it is through a private message
 		if ($event->getSource() !== $playerName) {
@@ -301,12 +303,15 @@ class OneNightRevolution
 			return;
 		}
 
-		if ($this->phase === 'nightActions') {
+		if ($this->phase !== 'nightActionsPhase') {
 			$this->queue->ircNotice($playerName, 'Actions can only be taken during the night phase.');
 			return;
 		}
 
 		$args = $event->getCustomParams();
+
+		echo 'Active player: '.$playerName.PHP_EOL;
+		var_dump($args);
 
 		switch ($player['specialist']) {
 			case 'Analyst':
@@ -318,10 +323,10 @@ class OneNightRevolution
 				}
 				break;
 			case 'Confirmer':
-				//Confirmers will be sent a notice as soon as it is their turn.
+				$this->players[$playerName]['action'] = 'none';
 				break;
 			case 'DeepAgent':
-				//No action during the night phase.
+				$this->players[$playerName]['action'] = 'none';
 				break;
 			case 'Defetor':
 				if ($player['id'] === 'Rebel') {
@@ -335,19 +340,20 @@ class OneNightRevolution
 					} else {
 						$this->queue->ircNotice($playerName, 'Invalid HQ ID #. Choose 1, 2, or 3.');
 					}
+				} else {
+					$this->players[$playerName]['action'] = 'none';
 				}
-				//Informants will be sent a notice as soon as it is their turn.
 				break;
 			case 'Investigator':
 				if (!isset($this->players[$args[0]])) {
 					$this->queue->ircNotice($playerName, 'Player not in the current game. Choose another player name.');
 				} else {
 					$this->players[$playerName]['action'] = $args[0];
-					$this->queue->ircNotice($playerName, $args[0].' is a '.$this->players[$arg[0]]['id']);
+					$this->queue->ircNotice($playerName, $args[0].' is a '.$this->players[$args[0]]['id']);
 				}
 				break;
 			case 'Observer':
-				//No action during the night phase.
+				$this->players[$playerName]['action'] = 'none';
 				break;
 			case 'Reassigner':
 				if ($player['id'] === 'Rebel') {
@@ -380,7 +386,7 @@ class OneNightRevolution
 				} else {
 					$this->players[$playerName]['action'] = $args[0];
 					$this->queue->ircNotice($playerName, $args[0].' is a '.$this->players[$arg[0]]['id']);
-					if ($this->players[$arg[0]]['id'] !== 'Informant') {
+					if ($this->players[$args[0]]['id'] !== 'Informant') {
 						$this->queue->ircPrivmsg($this->channel, $args[0].'\'s ID has been flipped face up. '.$args[0].' was a Rebel.');
 					}
 				}
@@ -449,7 +455,6 @@ class OneNightRevolution
 				}
 				break;
 			case 'Rogue':
-				//Rebels will be sent a notice as soon as it is their turn.
 				if ($player['id'] === 'Informant') {
 					if (!isset($this->players[$args[0]])) {
 						$this->queue->ircNotice($playerName, 'Player not in the current game. Choose another player name.');
@@ -463,6 +468,8 @@ class OneNightRevolution
 						$this->players[$args[0]]['id'] = $this->players[$args[1]]['id'];
 						$this->players[$args[1]]['id'] = $swap;
 					}
+				} else {
+					$this->players[$playerName]['action'] = 'none';
 				}
 				break;
 			case 'Thief':
@@ -474,16 +481,21 @@ class OneNightRevolution
 						$this->players[$args[0]]['id'] = $this->players[$playerName]['id'];
 						$this->players[$playerName]['id'] = $swap;
 						$this->players[$playerName]['action'] = $args[0];
-						$this->queue->ircNotice($playerName, 'Your new ID is: '.$swap);
+						$this->queue->ircNotice($playerName, 'Your new ID is: '.$this->players[$playerName]['id']);
 					}
+				} else {
+					$this->players[$playerName]['action'] = 'none';
 				}
-				//Informants will be sent a notice as soon as it is their turn.
 				break;
 		}
 
 		if (isset($this->players[$playerName]['action'])) {
 			$this->runPhase();
 		}
+	}
+
+	public function declarePhase() {
+		$this->queue->ircPrivmsg($this->channel, 'Declare phase started');
 	}
 
 	public function handleDeclare(Event $event, Queue $queue)
