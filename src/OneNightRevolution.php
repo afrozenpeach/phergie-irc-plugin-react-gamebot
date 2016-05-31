@@ -57,6 +57,7 @@ class OneNightRevolution
 		return [
 			 'command.action' => [$this, 'handleAction'],
 			 'command.declare' => [$this, 'handleDeclare'],
+			 'command.vote' => [$this, 'handleVote'],
 			 'command.cheatsheet' => [$this, 'handleCheatsheet']
 		];
 	}
@@ -176,6 +177,9 @@ class OneNightRevolution
 			case 'declarePhase':
 				$this->declarePhase();
 				break;
+			case 'votePhase':
+				$this->votePhaes();
+				break;
 		}
 	}
 
@@ -227,7 +231,7 @@ class OneNightRevolution
 		return $foundPlayer;
 	}
 
-	public function nightActions()
+	private function nightActions()
 	{
 		if (!$this->getNextPlayer('declarePhase', 'The night has ended. When it is your turn, declare a specialty.')) {
 			return;
@@ -511,7 +515,7 @@ class OneNightRevolution
 		}
 	}
 
-	public function declarePhase() {
+	private function declarePhase() {
 		if (!$this->getNextPlayer('dayPhase', 'The declare phase has ended and the day phase has started. Discuss the events of the night. When ready to vote private message me with !vote <playername>')) {
 			return;
 		}
@@ -554,6 +558,48 @@ class OneNightRevolution
 		if (isset($this->players[$playerName]['declare'])) {
 			$this->runPhase();
 		}
+	}
+
+	public function handleVote(Event $event, Queue $queue)
+	{
+		$playerName = $event->getNick();
+
+		if (isset($this->players[$playerName])) {
+			$player = $this->players[$playerName];
+		} else {
+			return;
+		}
+
+		if ($this->phase !== 'dayPhase') {
+			return;
+		}
+
+		$args = $event->getCustomParams();
+
+		echo 'Active player: '.$playerName.PHP_EOL;
+		var_dump($args);
+
+		$args[0] =  strtolower($args[0]);
+
+		$this->players[$playerName]['vote'] = $args[0];
+
+		$allVotes = true;
+
+		foreach ($this->players as $playerName => $player) {
+			if (!isset($this->players[$playerName]['vote'])) {
+				$allVotes = false;
+				break;
+			}
+		}
+
+		if ($allVotes) {
+			$this->phase = 'votePhase';
+			$this->runPhase();
+		}
+	}
+
+	private function votePhase() {
+
 	}
 
 	public function handleCheatsheet(Event $event, Queue $queue)
