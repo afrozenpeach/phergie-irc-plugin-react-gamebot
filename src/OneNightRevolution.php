@@ -662,7 +662,7 @@ class OneNightRevolution
 		if ($rebelsWin) {
 			$this->queue->ircPrivmsg($channel, 'The Rebels win!');
 		} else {
-			$this->queue->ircPrivmsg($channel, 'The Informants win!')
+			$this->queue->ircPrivmsg($channel, 'The Informants win!');
 		}
 	}
 
