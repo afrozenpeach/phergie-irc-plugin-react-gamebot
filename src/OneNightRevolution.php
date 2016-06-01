@@ -599,7 +599,71 @@ class OneNightRevolution
 	}
 
 	private function votePhase() {
+		$votes = [];
 
+		foreach ($this->players as $playerName => $player) {
+			if (isset($votes[$this->players[$playerName]['vote'])) {
+				$votes[$this->players[$playerName]['vote']]++;
+			} else {
+				$votes[$this->players[$playerName]['vote']] = 1;
+			}
+		}
+
+		$highestVoteCount = 0;
+		$terminated = [];
+		$rebelsWin = false;
+
+		foreach ($votes as $player => $count) {
+			if ($count > $highestVoteCount) {
+				unset($terminated);
+				$terminated = [];
+				$terminated[] = $player;
+			} else if ($count == $highestVoteCount) {
+				$terminated[] = $player;
+			}
+		}
+
+		$rebelsWin = null;
+
+		if (count($terminated) === count($this->players)) {
+			$terminatedMessage = 'No one is terminated.';
+			$rebelsWin = true;
+
+			foreach ($this->players as $playerName => $player) {
+				if ($this->players[$playerName]['id'] === 'Informant') {
+					$rebelsWin = false;
+					break;
+				}
+			}
+		} else if (count($terminated) >= 2) {
+			$terminatedMessage = 'The following players are terminated: '.implode(', ', $terminated);
+			$rebelsWin = false;
+
+			foreach ($this->players as $playerName => $player) {
+				foreach ($terminated as $terminatedPlayerName) {
+					if (strtolower($playerName) === $terminatedPlayerName && $this->players[$playerName]['id'] === 'Informant') {
+						$rebelsWin = true;
+					}
+				}
+			}
+		} else {
+			$terminatedMessage = $terminated[0].' is terminated.';
+			$rebelsWin = false;
+
+			foreach ($this->players as $playerName => $player) {
+				if (strtolower($playerName) === $terminated[0] && $this->players[$playerName]['id'] === 'Informant') {
+					$rebelsWin = true;
+				}
+			}
+		}
+
+		$this->queue->ircPrivmsg($channel, 'The votes are in. '.$terminatedMessage);
+
+		if ($rebelsWin) {
+			$this->queue->ircPrivmsg($channel, 'The Rebels win!');
+		} else {
+			$this->queue->ircPrivmsg($channel, 'The Informants win!')
+		}
 	}
 
 	public function handleCheatsheet(Event $event, Queue $queue)
