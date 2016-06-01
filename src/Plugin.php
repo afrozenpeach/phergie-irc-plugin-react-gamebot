@@ -49,7 +49,8 @@ class Plugin extends AbstractPlugin
             'command.create' => 'handleCreate',
 			'command.start' => 'handleStart',
 			'command.join' => 'handleJoin',
-			'command.end' => 'handleEnd'
+			'command.end' => 'handleEnd',
+			'command.restart' => 'handleRestart'
         ];
     }
 
@@ -153,7 +154,7 @@ class Plugin extends AbstractPlugin
 		$game = $this->activeGames[$serverName][$channel];
 
 		if ($game) {
-			$queue->ircPrivmsg($channel, 'Game has been ended.');
+			$queue->ircPrivmsg($channel, 'Game has ended.');
 			unset($this->activeGames[$serverName][$channel]);
 
 			if (count($this->activeGames[$serverName]) === 0) {
@@ -162,6 +163,12 @@ class Plugin extends AbstractPlugin
 		} else {
 			$queue->ircPrivmsg($channel, 'No game has been created.');
 		}
+	}
+
+	public function handleRestart(Event $event, Queue $queue)
+	{
+		handleEnd($event, $queue);
+		handleStart($event, $queue);
 	}
 
 	public static function shuffle_assoc(&$array) {
