@@ -602,7 +602,7 @@ class OneNightRevolution
 		$votes = [];
 
 		foreach ($this->players as $playerName => $player) {
-			if (isset($votes[$this->players[$playerName]['vote'])) {
+			if (isset($votes[$this->players[$playerName]['vote']])) {
 				$votes[$this->players[$playerName]['vote']]++;
 			} else {
 				$votes[$this->players[$playerName]['vote']] = 1;
