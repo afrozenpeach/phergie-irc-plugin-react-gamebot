@@ -21,7 +21,6 @@ class OneNightRevolution
 	private $phase = null;
 	private $maxPlayers = 10;
 	private $validSpecialties = ['Analyst', 'Confirmer', 'DeepAgent', 'Defector', 'Investigator', 'Observer', 'Reassigner', 'Revealer', 'Signaller', 'Rogue', 'Thief'];
-	private $specialties = ['Reassigner' => 2, 'Investigator' => 2, 'Thief' => 2, 'Signaler' => 2, 'Observer' => 2];
 	private $availableSpecialties = null;
 	private $ids = ['Rebel' => 10, 'Informant' => 3];
 	private $message = null;
@@ -81,7 +80,7 @@ class OneNightRevolution
 			case 10:
 				break;
 			case 3:
-				$this->specialties['Signaler']--;
+				$this->specialties['Signaller']--;
 				$this->ids['Rebel']--;
 			case 4:
 				$this->specialties['Observer']--;
@@ -90,7 +89,7 @@ class OneNightRevolution
 				$this->specialties['Investigator']--;
 				$this->ids['Rebel']--;
 			case 6:
-				$this->specialties['Signaler']--;
+				$this->specialties['Signaller']--;
 				$this->ids['Rebel']--;
 			case 7:
 				$this->specialties['Observer']--;
