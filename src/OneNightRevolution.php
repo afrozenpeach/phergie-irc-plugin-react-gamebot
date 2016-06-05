@@ -222,6 +222,8 @@ class OneNightRevolution
 		}
 
 		$this->queue->ircPrivmsg($this->channel, 'Night phase has begun. Each player will be given their missions privately. Complete your mission when it is assigned.');
+		$turnOrder = 'The turn order is: '.implode(', ', array_keys($this->players));
+		$this->queue->ircPrivmsg($this->channel, $turnOrder);
 		$this->phase = 'nightActionsPhase';
 		$this->runPhase();
 	}
