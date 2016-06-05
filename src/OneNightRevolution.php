@@ -281,7 +281,7 @@ class OneNightRevolution
 				$this->queue->ircNotice($this->currentPlayer, 'No action during the night phase. Send me a private message with !action');
 				break;
 			case 'Reassigner':
-				if ($player['id'] === 'Rebel') {
+				if ($this->players[$this->currentPlayer]['id'] === 'Rebel') {
 					$this->queue->ircNotice($this->currentPlayer, 'Switch two other player\'s IDs. Send me a private message with !action <playername 1> <playername 2>');
 				} else {
 					$this->queue->ircNotice($this->currentPlayer, 'Switch a Rebel player\'s ID with an HQ Informant ID. Send me a private message with !action <playername> <1, 2, or 3>');
@@ -291,7 +291,7 @@ class OneNightRevolution
 				$this->queue->ircNotice($this->currentPlayer, 'Flip another player\'s ID face up. If it\'s an Informant flip it back down. Send me a private message with !action <playername>');
 				break;
 			case 'Signaller':
-				if ($player['id'] === 'Rebel') {
+				if ($this->players[$this->currentPlayer]['id'] === 'Rebel') {
 					$this->queue->ircNotice($this->currentPlayer, 'Tap the player on your immediate left or right. Send me a private message with !action <left or right>');
 				} else {
 					$leftPlayer = null;
@@ -315,14 +315,14 @@ class OneNightRevolution
 				}
 				break;
 			case 'Rogue':
-				if ($player['id'] === 'Rebel') {
+				if ($this->players[$this->currentPlayer]['id'] === 'Rebel') {
 					$this->queue->ircNotice($plathis->currentPlayeryerName, 'Your current ID: '.$this->players[$this->currentPlayer]['id'].'.  Send me a private message with !action');
 				} else {
 					$this->queue->ircNotice($this->currentPlayer, 'Switch a Rebel player\'s ID with another informant player\'s ID. Send me a private message with !action <rebel playername> <informant playername>');
 				}
 				break;
 			case 'Thief':
-				if ($player['id'] === 'Rebel') {
+				if ($this->players[$this->currentPlayer]['id'] === 'Rebel') {
 					$this->queue->ircNotice($this->currentPlayer, 'Switch your ID with another player\'s ID. You will be sent a notice with your new ID. Send me a private message with !action <playername>');
 				} else {
 					$this->queue->ircNotice($this->currentPlayer, 'Your current ID: '.$this->players[$this->currentPlayer]['id'].'. Send me a private message with !action');
@@ -518,7 +518,7 @@ class OneNightRevolution
 					if (!isset($this->players[$args[0]])) {
 						$this->queue->ircNotice($playerName, 'Player not in the current game. Choose another player name.');
 					} else {
-						$swap = $this->players[$args[0]];
+						$swap = $this->players[$args[0]]['id'];
 						$this->players[$args[0]]['id'] = $this->players[$playerName]['id'];
 						$this->players[$playerName]['id'] = $swap;
 						$this->players[$playerName]['action'] = $args[0];
