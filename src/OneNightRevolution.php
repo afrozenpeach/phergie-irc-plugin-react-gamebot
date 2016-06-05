@@ -21,6 +21,7 @@ class OneNightRevolution
 	private $phase = null;
 	private $maxPlayers = 10;
 	private $validSpecialties = ['Analyst', 'Confirmer', 'DeepAgent', 'Defector', 'Investigator', 'Observer', 'Reassigner', 'Revealer', 'Signaller', 'Rogue', 'Thief'];
+	private $specialties = ['Reassigner' => 2, 'Investigator' => 2, 'Thief' => 2, 'Signaller' => 2, 'Observer' => 2];
 	private $availableSpecialties = null;
 	private $ids = ['Rebel' => 10, 'Informant' => 3];
 	private $message = null;
@@ -108,6 +109,26 @@ class OneNightRevolution
 				return;
 				break;
 		}
+
+		$usedSpecialties = [];
+
+		foreach ($this->specialties as $specialty => $count) {
+			if ($count > 0) {
+				$usedSpecialties[$specialty] = $count;
+			}
+		}
+
+		$this->specialties = $usedSpecialties;
+
+		$usedIDs = [];
+
+		foreach ($this->ids as $id => $count) {
+			if ($count > 0) {
+				$usedIDs[$id] = $count;
+			}
+		}
+
+		$this->ids = $usedIDs;
 
 		GameBot::shuffle_assoc($this->players);
 		$this->activeSpecialties = [];
