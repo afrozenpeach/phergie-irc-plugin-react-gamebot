@@ -447,6 +447,13 @@ class OneNightRevolution
 								break;
 							}
 						}
+
+						if ($foundPlayer === null) {
+							$foundPlayer = end($this->players);
+							$foundPlayerName = key($this->players);
+							$this->queue->ircNotice($foundPlayerName, 'You have been tapped by a signaller.');
+							$this->players[$playerName]['action'] = $args[0];
+						}
 					} else if ($args[0] === 'right') {
 						$foundPlayer = null;
 						foreach ($this->players as $foundPlayerName => $player) {
@@ -457,6 +464,13 @@ class OneNightRevolution
 							} else {
 								$foundPlayer = $foundPlayerName;
 							}
+						}
+
+						if ($foundPlayer === null) {
+							$foundPlayer = reset($this->players);
+							$foundPlayerName = key($this->players);
+							$this->queue->ircNotice($foundPlayerName, 'You have been tapped by a signaller.');
+							$this->players[$playerName]['action'] = $args[0];
 						}
 					} else {
 						$this->queue->ircNotice($playerName, 'Invalid tap target. Choose left or right.');
