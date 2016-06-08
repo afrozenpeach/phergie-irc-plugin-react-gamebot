@@ -230,9 +230,19 @@ class OneNightRevolution
 
 	private function getNextPlayer(string $nextPhase, string $phaseChangeMessage) {
 		$foundPlayer = false;
+		$action = '';
+
+		switch ($this->phase) {
+			case 'nightActionsPhase':
+				$action = 'action';
+				break;
+			case 'declarePhase':
+				$action = 'declare';
+				break;
+		}
 
 		foreach ($this->players as $playerName => $player) {
-			if ($this->currentPlayer === null || !isset($this->players[$playerName]['action'])) {
+			if ($this->currentPlayer === null || !isset($this->players[$playerName][$action])) {
 				$this->currentPlayer = $playerName;
 				$first = true;
 
